@@ -1,0 +1,23 @@
+---
+- name: Ensure webroot directory exists
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Upload and extract the static website tarball
+  unarchive:
+    src: /home/devops-project/app/app.tar.gz
+    dest: /var/www/html
+    owner: www-data
+    group: www-data
+    mode: "0644"
+
+- name: Fix ownership on deployed site files
+  file:
+    path: /var/www/html
+    owner: www-data
+    group: www-data
+    recurse: true
