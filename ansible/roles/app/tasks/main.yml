@@ -27,6 +27,7 @@
     version: "{{ app_repo_version }}"
     force: true
   become_user: ubuntu
+  notify: restart node-app
 
 - name: Install npm dependencies
   npm:
