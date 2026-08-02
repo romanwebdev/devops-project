@@ -1,0 +1,11 @@
+---
+- name: Add NodeSource APT repository for Node.js 20.x
+  shell: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  args:
+    creates: /etc/apt/sources.list.d/nodesource.list
+
+- name: Install Node.js and npm
+  apt:
+    name: nodejs
+    state: present
+    update_cache: true
