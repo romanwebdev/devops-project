@@ -40,3 +40,13 @@ I extended the Ansible setup to replace the static HTML/CSS site with a Node.js 
 **Git Branch**: `node-service+github-actions`
 
 [Link to the task](https://roadmap.sh/projects/nodejs-service-deployment)
+
+---
+
+### Step 4: Dockerizing the service and deploying via GitHub Container Registry
+
+I extended the Node.js service with a Basic Auth-protected `/secret` route (reading `SECRET_MESSAGE`, `USERNAME`, and `PASSWORD` from environment variables) and containerized it with a `Dockerfile`, excluding the `.env` file from the image via `.dockerignore`. On the infrastructure side, I added a `docker` role to install Docker Engine on the existing EC2 instance and reworked the `app` role to retire the previous systemd-managed Node process in favor of pulling and running the containerized app, using the `community.docker` Ansible collection to authenticate with GitHub Container Registry, pull the image, template a runtime `.env` file, and run the container with a restart policy. Updated the GitHub Actions workflow to build the Docker image, push it to `ghcr.io` using the built-in `GITHUB_TOKEN`, then invoke the same Ansible pipeline with sensitive values (registry token, secret message, Basic Auth credentials) passed as `--extra-vars` rather than stored in the repo. This introduced multi-stage CI/CD (build-and-push followed by deploy), container registry authentication, and reusing an existing Ansible pipeline to manage a fundamentally different deployment artifact (a container image instead of a cloned application directory).
+
+**Git Branch**: `dockerized-service`
+
+[Link to the task](https://roadmap.sh/projects/dockerized-service-deployment)
