@@ -1,12 +1,13 @@
 {
   "name": "node-hello-service",
   "version": "1.0.0",
-  "description": "Simple Node.js hello world service",
+  "description": "Simple Node.js hello world service with a Basic Auth protected route",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "dotenv": "^16.4.5"
   }
 }
