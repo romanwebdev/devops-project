@@ -4,7 +4,7 @@
   become: true
   gather_facts: true
   roles:
-    - role: nodejs
-      tags: ['nodejs', 'app']
+    - role: docker
+      tags: ['app']
     - role: app
       tags: ['app']

@@ -1,21 +1,43 @@
-name: Deploy Node.js App
+name: Build and Deploy Node.js App
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+env:
+  IMAGE_NAME: ghcr.io/romanwebdev/devops-project
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Ansible
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./app
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest
+
+      - name: Install Ansible and Docker collection
         run: |
           sudo apt update
           sudo apt install -y ansible
+          ansible-galaxy collection install community.docker
 
       - name: Set up SSH key
         run: |
@@ -34,5 +56,12 @@ jobs:
           EOF
 
       - name: Run Ansible playbook
-        run: ansible-playbook -i inventory.ini node_service.yml --tags app
+        run: |
+          ansible-playbook -i inventory.ini node_service.yml --tags app \
+            --extra-vars "docker_image=${{ env.IMAGE_NAME }}:latest" \
+            --extra-vars "ghcr_username=${{ github.actor }}" \
+            --extra-vars "ghcr_token=${{ secrets.GITHUB_TOKEN }}" \
+            --extra-vars "secret_message=${{ secrets.SECRET_MESSAGE }}" \
+            --extra-vars "basic_auth_username=${{ secrets.BASIC_AUTH_USERNAME }}" \
+            --extra-vars "basic_auth_password=${{ secrets.BASIC_AUTH_PASSWORD }}"
         working-directory: ansible

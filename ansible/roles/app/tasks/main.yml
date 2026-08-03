@@ -1,15 +1,9 @@
 ---
-- name: Stop and disable Nginx
+- name: Stop and disable old systemd node-app service (replaced by Docker)
   systemd:
-    name: nginx
+    name: node-app
     state: stopped
     enabled: false
-  ignore_errors: true
-
-- name: Ensure Nginx package is removed
-  apt:
-    name: nginx
-    state: absent
   ignore_errors: true
 
 - name: Ensure app directory exists
@@ -20,30 +14,40 @@
     group: ubuntu
     mode: "0755"
 
-- name: Clone/update the application repository
-  git:
-    repo: "{{ app_repo_url }}"
-    dest: "{{ app_dest }}"
-    version: "{{ app_repo_version }}"
-    force: true
-  become_user: ubuntu
-  notify: restart node-app
+- name: Log in to GitHub Container Registry
+  community.docker.docker_login:
+    registry_url: ghcr.io
+    username: "{{ ghcr_username }}"
+    password: "{{ ghcr_token }}"
 
-- name: Install npm dependencies
-  npm:
-    path: "{{ app_dest }}/app"
-    production: true
+- name: Pull the latest application image
+  community.docker.docker_image:
+    name: "{{ docker_image }}"
+    source: pull
+    force_source: true
 
-- name: Deploy systemd unit for the Node app
+- name: Deploy .env file for the container
   template:
-    src: node-app.service.j2
-    dest: /etc/systemd/system/node-app.service
-    mode: "0644"
-  notify: restart node-app
+    src: app.env.j2
+    dest: "{{ app_dest }}/.env"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0600"
 
-- name: Ensure node-app service is enabled and started
-  systemd:
-    name: node-app
+- name: Stop and remove existing container
+  community.docker.docker_container:
+    name: node-hello-service
+    state: absent
+  ignore_errors: true
+
+- name: Run the application container
+  community.docker.docker_container:
+    name: node-hello-service
+    image: "{{ docker_image }}"
     state: started
-    enabled: true
-    daemon_reload: true
+    restart_policy: always
+    ports:
+      - "80:3000"
+    env_file: "{{ app_dest }}/.env"
+    env:
+      PORT: "3000"
