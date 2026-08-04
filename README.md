@@ -60,3 +60,13 @@ I extended the same Node.js app with a full CRUD Todo API (`GET/POST/PUT/DELETE 
 **Git Branch**: `multi-container-application`
 
 [Link to the task](https://roadmap.sh/projects/multi-container-service)
+
+---
+
+### Step 6: Scheduled MongoDB backups to S3
+
+I set up automated backups of the MongoDB data running on the EC2 instance, using a cron job on the server rather than a scheduled GitHub Actions workflow, since the database already lives there and a local cron avoids round-tripping through CI just to trigger a remote action. Added a `backup` Ansible role that installs AWS CLI v2 (Ubuntu's default repos don't ship a usable `awscli` package, so it downloads and installs the official AWS binary instead), deploys AWS credentials for a dedicated least-privilege IAM user scoped to a single S3 bucket, and templates a backup script that runs `mongodump` inside the `mongo` container, copies the dump out to the host, tars it, uploads it to S3, and prunes old local tarballs while leaving the full history in S3. The role schedules this via Ansible's `cron` module to run every 12 hours. I originally planned to use Cloudflare R2 as the task suggests, but switched to AWS S3 — S3's API is functionally equivalent for this use case. This introduced running commands inside a live Docker container from a host-level script, scoped IAM permissions for automation, and server-side scheduled tasks as an alternative to CI-triggered automation.
+
+**Git Branch**: `automated-db-backups`
+
+[Link to the task](https://roadmap.sh/projects/automated-backups)
