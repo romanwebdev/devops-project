@@ -1,53 +1,40 @@
 ---
-- name: Stop and disable old systemd node-app service (replaced by Docker)
-  systemd:
-    name: node-app
-    state: stopped
-    enabled: false
-  ignore_errors: true
-
 - name: Ensure app directory exists
   file:
-    path: "{{ app_dest }}"
+    path: '{{ app_dest }}'
     state: directory
     owner: ubuntu
     group: ubuntu
-    mode: "0755"
+    mode: '0755'
 
-- name: Log in to GitHub Container Registry
-  community.docker.docker_login:
-    registry_url: ghcr.io
-    username: "{{ ghcr_username }}"
-    password: "{{ ghcr_token }}"
-
-- name: Pull the latest application image
-  community.docker.docker_image:
-    name: "{{ docker_image }}"
-    source: pull
-    force_source: true
-
-- name: Deploy .env file for the container
-  template:
-    src: app.env.j2
-    dest: "{{ app_dest }}/.env"
-    owner: ubuntu
-    group: ubuntu
-    mode: "0600"
-
-- name: Stop and remove existing container
+- name: Stop and remove previous standalone container from earlier deploy
   community.docker.docker_container:
     name: node-hello-service
     state: absent
   ignore_errors: true
 
-- name: Run the application container
-  community.docker.docker_container:
-    name: node-hello-service
-    image: "{{ docker_image }}"
-    state: started
-    restart_policy: always
-    ports:
-      - "80:3000"
-    env_file: "{{ app_dest }}/.env"
-    env:
-      PORT: "3000"
+- name: Deploy production docker-compose.yml
+  template:
+    src: docker-compose.prod.yml.j2
+    dest: '{{ app_dest }}/docker-compose.yml'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Deploy .env file for the application
+  template:
+    src: app.env.j2
+    dest: '{{ app_dest }}/.env'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Pull latest images
+  command: docker compose pull
+  args:
+    chdir: '{{ app_dest }}'
+
+- name: Start application stack
+  command: docker compose up -d
+  args:
+    chdir: '{{ app_dest }}'

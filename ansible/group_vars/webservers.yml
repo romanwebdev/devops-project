@@ -2,3 +2,4 @@
 app_repo_url: https://github.com/romanwebdev/devops-project.git
 app_repo_version: main
 app_dest: /opt/app
+mongo_uri: mongodb://mongo:27017/tododb
