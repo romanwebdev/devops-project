@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="{{ app_dest }}/backups"
+DUMP_NAME="mongo_backup_${TIMESTAMP}"
+
+mkdir -p "$BACKUP_DIR"
+
+# Dump inside the mongo container, then copy the dump out to the host
+docker exec mongo mongodump --out "/tmp/${DUMP_NAME}"
+docker cp "mongo:/tmp/${DUMP_NAME}" "${BACKUP_DIR}/${DUMP_NAME}"
+docker exec mongo rm -rf "/tmp/${DUMP_NAME}"
+
+# Tar it up
+tar -czf "${BACKUP_DIR}/${DUMP_NAME}.tar.gz" -C "$BACKUP_DIR" "$DUMP_NAME"
+rm -rf "${BACKUP_DIR}/${DUMP_NAME}"
+
+# Upload to S3
+aws s3 cp "${BACKUP_DIR}/${DUMP_NAME}.tar.gz" "s3://{{ s3_bucket_name }}/${DUMP_NAME}.tar.gz"
+
+# Keep only the 5 most recent local tarballs, S3 retains full history
+cd "$BACKUP_DIR" && ls -t *.tar.gz | tail -n +6 | xargs -r rm --
+
+echo "Backup completed: ${DUMP_NAME}.tar.gz"

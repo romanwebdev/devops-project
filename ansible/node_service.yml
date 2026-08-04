@@ -8,3 +8,5 @@
       tags: ['app']
     - role: app
       tags: ['app']
+    - role: backup
+      tags: ['app', 'backup']

@@ -57,5 +57,8 @@ jobs:
             --extra-vars "docker_image=${{ env.IMAGE_NAME }}:latest" \
             --extra-vars "secret_message=${{ secrets.SECRET_MESSAGE }}" \
             --extra-vars "basic_auth_username=${{ secrets.BASIC_AUTH_USERNAME }}" \
-            --extra-vars "basic_auth_password=${{ secrets.BASIC_AUTH_PASSWORD }}"
+            --extra-vars "basic_auth_password=${{ secrets.BASIC_AUTH_PASSWORD }}" \
+            --extra-vars "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            --extra-vars "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            --extra-vars "s3_bucket_name=${{ secrets.S3_BUCKET_NAME }}"
         working-directory: ansible

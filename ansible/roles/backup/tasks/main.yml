@@ -1,0 +1,46 @@
+---
+- name: Install AWS CLI
+  apt:
+    name: awscli
+    state: present
+    update_cache: true
+
+- name: Ensure .aws directory exists
+  file:
+    path: /home/ubuntu/.aws
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0700'
+
+- name: Deploy AWS credentials file
+  template:
+    src: aws_credentials.j2
+    dest: /home/ubuntu/.aws/credentials
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Deploy AWS config file (region)
+  template:
+    src: aws_config.j2
+    dest: /home/ubuntu/.aws/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Deploy backup script
+  template:
+    src: backup-mongo.sh.j2
+    dest: '{{ app_dest }}/backup-mongo.sh'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Schedule backup cron job every 12 hours
+  cron:
+    name: 'MongoDB backup to S3'
+    user: ubuntu
+    minute: '0'
+    hour: '0,12'
+    job: '{{ app_dest }}/backup-mongo.sh >> {{ app_dest }}/backup.log 2>&1'
