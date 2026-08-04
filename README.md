@@ -50,3 +50,13 @@ I extended the Node.js service with a Basic Auth-protected `/secret` route (read
 **Git Branch**: `dockerized-service`
 
 [Link to the task](https://roadmap.sh/projects/dockerized-service-deployment)
+
+---
+
+### Step 5: Building a Todo API with MongoDB and deploying via Docker Compose
+
+I extended the same Node.js app with a full CRUD Todo API (`GET/POST/PUT/DELETE /todos`, `GET /todos/:id`), backed by MongoDB through Mongoose, keeping the existing `/` and `/secret` routes intact. Locally, a `docker-compose.yml` spins up the API alongside a MongoDB container with a named volume for persistent storage, so todo data survives container restarts. For production, I extended the `docker` Ansible role to install the Docker Compose plugin, and rewrote the `app` role to deploy a templated production `docker-compose.yml` (pulling the pre-built API image instead of building on the server) alongside the same MongoDB service, replacing the previous standalone-container deployment. The GitHub Actions workflow now builds and pushes the image to Docker Hub instead of GHCR, then runs the same Ansible pipeline to pull and restart the stack with `docker compose`. This introduced multi-container orchestration with Docker Compose, persistent data volumes across deployments, and switching container registries within an already-established CI/CD pipeline.
+
+**Git Branch**: `multi-container-application`
+
+[Link to the task](https://roadmap.sh/projects/multi-container-service)
