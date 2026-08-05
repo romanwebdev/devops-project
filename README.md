@@ -70,3 +70,13 @@ I set up automated backups of the MongoDB data running on the EC2 instance, usin
 **Git Branch**: `automated-db-backups`
 
 [Link to the task](https://roadmap.sh/projects/automated-backups)
+
+---
+
+### Step 7: Blue-green deployment with Nginx
+
+I restructured the deployment to support blue-green releases with zero downtime. Introduced an Nginx reverse proxy as the sole entry point on port 80, sitting in front of two identical API containers (`api_blue` and `api_green`) that are no longer exposed to the host directly, both running continuously with only one receiving live traffic at a time via Nginx's upstream config. Added a dedicated `/health` endpoint to the app, and wrote a `deploy-blue-green.sh` script that deploys the new image into whichever container is currently idle, polls its `/health` endpoint until it responds successfully, then rewrites the Nginx upstream and issues a graceful `nginx -s reload` to cut traffic over atomically — aborting before any traffic switch if the health check fails. The previously active container is left running untouched after a successful switch, making rollback as simple as re-running the deploy script to flip back. I also split the deployment pipeline: Ansible now only runs for infrastructure/template changes (Nginx config, compose structure, the switch script itself), while routine code deploys use `appleboy/ssh-action` to SSH in and trigger the switch script directly, rather than re-running the full playbook on every push. This introduced reverse-proxy-based traffic control, health-check-gated deployments, atomic zero-downtime cutovers, and separating infrastructure provisioning from routine application deploys within the same CI/CD pipeline.
+
+**Git Branch**: `blue-green-deployment`
+
+[Link to the task](https://roadmap.sh/projects/blue-green-deployment)
