@@ -1,0 +1,21 @@
+---
+- name: Deploy Prometheus config
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ app_dest }}/prometheus.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Deploy monitoring docker-compose file
+  template:
+    src: docker-compose.monitoring.yml.j2
+    dest: "{{ app_dest }}/docker-compose.monitoring.yml"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0644"
+
+- name: Start monitoring stack (merged with main app network)
+  command: docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+  args:
+    chdir: "{{ app_dest }}"

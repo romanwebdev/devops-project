@@ -10,3 +10,5 @@
       tags: ['app']
     - role: backup
       tags: ['app', 'backup']
+    - role: monitoring
+      tags: ['app', 'monitoring']

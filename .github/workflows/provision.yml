@@ -1,0 +1,50 @@
+name: Provision Infrastructure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Ansible and Docker collection
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+          ansible-galaxy collection install community.docker
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/devops_key1
+          chmod 600 ~/.ssh/devops_key1
+
+      - name: Create inventory file
+        run: |
+          cat <<EOF > ansible/inventory.ini
+          [webservers]
+          web1 ansible_host=${{ secrets.EC2_HOST }} ansible_user=${{ secrets.EC2_USER }} ansible_ssh_private_key_file=~/.ssh/devops_key1
+
+          [webservers:vars]
+          ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+          EOF
+
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook -i inventory.ini node_service.yml --tags app \
+            --extra-vars "docker_image=${{ env.IMAGE_NAME }}:latest" \
+            --extra-vars "secret_message=${{ secrets.SECRET_MESSAGE }}" \
+            --extra-vars "basic_auth_username=${{ secrets.BASIC_AUTH_USERNAME }}" \
+            --extra-vars "basic_auth_password=${{ secrets.BASIC_AUTH_PASSWORD }}" \
+            --extra-vars "aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            --extra-vars "aws_secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            --extra-vars "s3_bucket_name=${{ secrets.S3_BUCKET_NAME }}" \
+            --extra-vars "grafana_admin_user=${{ secrets.GRAFANA_ADMIN_USER }}" \
+            --extra-vars "grafana_admin_password=${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+        working-directory: ansible
+        env:
+          IMAGE_NAME: roman102/devops-project

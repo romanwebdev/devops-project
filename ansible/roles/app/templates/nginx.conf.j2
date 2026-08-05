@@ -11,3 +11,12 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
     }
 }
+
+server {
+    listen 8080;
+    location /stub_status {
+        stub_status;
+        allow 127.0.0.1;
+        deny all;
+    }
+}
