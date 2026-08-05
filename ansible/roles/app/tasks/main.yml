@@ -35,6 +35,12 @@
   set_fact:
     active_color: '{{ active_color_raw.content | b64decode | trim }}'
 
+- name: Stop and remove old single-container api service (pre blue-green)
+  community.docker.docker_container:
+    name: app-api-1
+    state: absent
+  ignore_errors: true
+
 - name: Deploy production docker-compose.yml
   template:
     src: docker-compose.prod.yml.j2
@@ -65,6 +71,6 @@
     chdir: '{{ app_dest }}'
 
 - name: Start application stack
-  command: docker compose up -d
+  command: docker compose up -d --remove-orphans
   args:
     chdir: '{{ app_dest }}'
