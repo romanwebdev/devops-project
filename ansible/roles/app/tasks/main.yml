@@ -57,6 +57,14 @@
     group: ubuntu
     mode: '0644'
 
+- name: Deploy blue-green switch script
+  template:
+    src: deploy-blue-green.sh.j2
+    dest: '{{ app_dest }}/deploy-blue-green.sh'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
 - name: Deploy .env file for the application
   template:
     src: app.env.j2

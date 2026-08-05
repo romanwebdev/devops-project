@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+APP_DIR="{{ app_dest }}"
+cd "$APP_DIR"
+
+CURRENT=$(cat active_color)
+if [ "$CURRENT" = "blue" ]; then
+  TARGET="green"
+else
+  TARGET="blue"
+fi
+
+echo "Current active: $CURRENT"
+echo "Deploying new version to idle slot: $TARGET"
+
+# Pull the new image and recreate only the idle container
+docker compose pull api_${TARGET}
+docker compose up -d --no-deps api_${TARGET}
+
+# Wait for the new container to be healthy
+echo "Waiting for api_${TARGET} to become healthy..."
+for i in $(seq 1 15); do
+  if docker exec api_${TARGET} wget -q -O- http://localhost:3000/health > /dev/null 2>&1; then
+    echo "api_${TARGET} is healthy."
+    break
+  fi
+  if [ "$i" -eq 15 ]; then
+    echo "api_${TARGET} failed health check after 15 attempts. Aborting, traffic not switched."
+    exit 1
+  fi
+  sleep 2
+done
+
+# Flip Nginx to point at the new container
+sed -i "s/server api_${CURRENT}:3000;/server api_${TARGET}:3000;/" nginx.conf
+docker exec nginx nginx -s reload
+
+# Record the new active color
+echo -n "$TARGET" > active_color
+
+echo "Switched traffic from $CURRENT to $TARGET successfully."
