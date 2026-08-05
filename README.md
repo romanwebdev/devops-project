@@ -80,3 +80,15 @@ I restructured the deployment to support blue-green releases with zero downtime.
 **Git Branch**: `blue-green-deployment`
 
 [Link to the task](https://roadmap.sh/projects/blue-green-deployment)
+
+---
+
+### Step 8: Monitoring with Prometheus and Grafana
+
+I added a full observability stack to the existing server using a separate `docker-compose.monitoring.yml` that merges with the main compose file at runtime (`docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d`), giving all monitoring containers access to the same Docker network and allowing them to resolve service names like `nginx`, `mongo`, and `api_blue` directly. The monitoring stack consists of Prometheus (15-day retention), node_exporter (system metrics — CPU, memory, disk, network), nginx-prometheus-exporter (connection metrics via Nginx's `stub_status` module, restricted to the internal Docker network), and mongodb_exporter with `--collect-all` (database stats, collection counts, data sizes per database including `tododb`). Grafana runs on port 3001 with admin credentials injected via environment variables from GitHub Actions secrets, connected to Prometheus as a data source.
+
+For application-specific metrics, I instrumented the Node.js app with `prom-client`, adding `collectDefaultMetrics` for Node.js runtime stats (heap usage, GC, event loop) and two custom metrics: `http_requests_total` (a counter labeled by method, route, and status code) and `http_request_duration_seconds` (a histogram with latency buckets for calculating p50/p95/p99 response times), exposed via a `/metrics` endpoint that Prometheus scrapes as a dedicated `node_app` job targeting both `api_blue` and `api_green`. I built four Grafana dashboards: Node Exporter Full (imported, ID 1860), an Nginx connections dashboard (imported, ID 12708), a custom MongoDB dashboard with per-database collection and data size panels, and a custom Application Metrics dashboard showing request rate by route, p95 response time per route, request distribution by status code, and Node.js heap usage over time. This introduced multi-container observability, the Prometheus scrape model, PromQL for rate and histogram quantile calculations, and the difference between infrastructure metrics (exported by sidecars) and application metrics (instrumented directly in code).
+
+**Git Branch**: `prometheus-and-grafana`
+
+[Link to the task](https://roadmap.sh/projects/monitoring)
