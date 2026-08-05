@@ -13,10 +13,40 @@
     state: absent
   ignore_errors: true
 
+- name: Check if active-color file exists
+  stat:
+    path: '{{ app_dest }}/active_color'
+  register: active_color_file
+
+- name: Initialize active color to blue on first deploy
+  copy:
+    content: 'blue'
+    dest: '{{ app_dest }}/active_color'
+    owner: ubuntu
+    group: ubuntu
+  when: not active_color_file.stat.exists
+
+- name: Read current active color
+  slurp:
+    src: '{{ app_dest }}/active_color'
+  register: active_color_raw
+
+- name: Set active_color fact
+  set_fact:
+    active_color: '{{ active_color_raw.content | b64decode | trim }}'
+
 - name: Deploy production docker-compose.yml
   template:
     src: docker-compose.prod.yml.j2
     dest: '{{ app_dest }}/docker-compose.yml'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Deploy Nginx config
+  template:
+    src: nginx.conf.j2
+    dest: '{{ app_dest }}/nginx.conf'
     owner: ubuntu
     group: ubuntu
     mode: '0644'

@@ -45,6 +45,10 @@ app.get('/secret', basicAuth, (req, res) => {
   res.send(process.env.SECRET_MESSAGE);
 });
 
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
