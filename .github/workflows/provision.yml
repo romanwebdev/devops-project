@@ -3,6 +3,9 @@ name: Provision Infrastructure
 on:
   workflow_dispatch:
 
+env:
+  API_IMAGE_NAME: roman102/devops-project-api
+
 jobs:
   provision:
     runs-on: ubuntu-latest
@@ -36,7 +39,7 @@ jobs:
       - name: Run Ansible playbook
         run: |
           ansible-playbook -i inventory.ini node_service.yml --tags app \
-            --extra-vars "docker_image=${{ env.IMAGE_NAME }}:latest" \
+            --extra-vars "api_image=${{ env.API_IMAGE_NAME }}:latest" \
             --extra-vars "secret_message=${{ secrets.SECRET_MESSAGE }}" \
             --extra-vars "basic_auth_username=${{ secrets.BASIC_AUTH_USERNAME }}" \
             --extra-vars "basic_auth_password=${{ secrets.BASIC_AUTH_PASSWORD }}" \

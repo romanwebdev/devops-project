@@ -12,14 +12,14 @@ services:
     restart: unless-stopped
 
   api_blue:
-    image: "{{ docker_image }}"
+    image: "{{ api_image }}"
     container_name: api_blue
     env_file:
       - .env
     restart: unless-stopped
 
   api_green:
-    image: "{{ docker_image }}"
+    image: "{{ api_image }}"
     container_name: api_green
     env_file:
       - .env

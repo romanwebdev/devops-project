@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: roman102/devops-project
+  IMAGE_NAME: roman102/devops-project-api
 
 jobs:
   build-and-deploy:
@@ -25,7 +25,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: ./app
+          context: ./api
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest
 
