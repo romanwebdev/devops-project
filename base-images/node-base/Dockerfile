@@ -7,7 +7,9 @@ RUN apk add --no-cache dumb-init && \
 
 WORKDIR /usr/src/app
 
-# Run as non-root by default; individual Dockerfiles can override if needed
+# Ensure the working directory is owned by the non-root user
+RUN chown -R appuser:appgroup /usr/src/app
+
 USER appuser
 
 ENTRYPOINT ["dumb-init", "--"]
