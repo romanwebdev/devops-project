@@ -22,6 +22,8 @@ services:
     container_name: api_blue
     env_file:
       - .env
+    depends_on:
+      - redis
     restart: unless-stopped
 
   api_green:
@@ -29,6 +31,8 @@ services:
     container_name: api_green
     env_file:
       - .env
+    depends_on:
+      - redis
     restart: unless-stopped
 
   mongo:
@@ -38,5 +42,14 @@ services:
       - mongo_data:/data/db
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   mongo_data:
+  redis_data:
