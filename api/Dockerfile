@@ -1,11 +1,11 @@
-FROM node:20-alpine
+FROM roman102/node-base:latest
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+COPY --chown=appuser:appgroup package*.json ./
 RUN npm install --omit=dev
 
-COPY . .
+COPY --chown=appuser:appgroup . .
 
 EXPOSE 3000
 
