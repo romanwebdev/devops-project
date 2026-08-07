@@ -1,5 +1,4 @@
-- name: restart node-app
-  systemd:
-    name: node-app
-    state: restarted
-    daemon_reload: true
+- name: restart nginx
+  command: docker compose -f docker-compose.yml -f docker-compose.monitoring.yml restart nginx
+  args:
+    chdir: '{{ app_dest }}'

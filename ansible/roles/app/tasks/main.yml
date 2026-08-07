@@ -56,6 +56,7 @@
     owner: ubuntu
     group: ubuntu
     mode: '0644'
+  notify: restart nginx
 
 - name: Deploy blue-green switch script
   template:
