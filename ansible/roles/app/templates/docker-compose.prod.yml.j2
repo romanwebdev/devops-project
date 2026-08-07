@@ -9,6 +9,12 @@ services:
     depends_on:
       - api_blue
       - api_green
+      - web
+    restart: unless-stopped
+
+  web:
+    image: "{{ web_image }}"
+    container_name: web
     restart: unless-stopped
 
   api_blue:

@@ -6,7 +6,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: roman102/devops-project-api
+  API_IMAGE_NAME: roman102/devops-project-api
+  WEB_IMAGE_NAME: roman102/devops-project-web
 
 jobs:
   build-and-deploy:
@@ -22,12 +23,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
           context: ./api
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.API_IMAGE_NAME }}:latest
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./web
+          push: true
+          tags: ${{ env.WEB_IMAGE_NAME }}:latest
 
       - name: Install Ansible and Docker collection
         run: |
@@ -51,10 +59,14 @@ jobs:
           ansible_ssh_common_args='-o StrictHostKeyChecking=no'
           EOF
 
-      - name: Run blue-green deployment
+      - name: Deploy Web + run blue-green for API
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: /opt/app/deploy-blue-green.sh
+          script: |
+            cd /opt/app
+            docker compose pull web
+            docker compose up -d --no-deps web
+            ./deploy-blue-green.sh
