@@ -13,6 +13,39 @@
     state: absent
   ignore_errors: true
 
+- name: Ensure secrets directory exists
+  file:
+    path: '{{ app_dest }}/secrets'
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0700'
+
+- name: Check if Mongo root password already exists
+  stat:
+    path: '{{ app_dest }}/secrets/mongo_root_password.txt'
+  register: mongo_secret_file
+
+- name: Generate Mongo root password if it doesn't exist
+  shell: openssl rand -base64 24 > "{{ app_dest }}/secrets/mongo_root_password.txt"
+  when: not mongo_secret_file.stat.exists
+
+- name: Secure the secret file permissions
+  file:
+    path: '{{ app_dest }}/secrets/mongo_root_password.txt'
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Read the generated Mongo root password
+  slurp:
+    src: '{{ app_dest }}/secrets/mongo_root_password.txt'
+  register: mongo_password_raw
+
+- name: Set mongo_root_password fact
+  set_fact:
+    mongo_root_password: '{{ mongo_password_raw.content | b64decode | trim }}'
+
 - name: Check if active-color file exists
   stat:
     path: '{{ app_dest }}/active_color'

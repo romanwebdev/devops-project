@@ -24,6 +24,7 @@ services:
       - .env
     depends_on:
       - redis
+      - mongo
     restart: unless-stopped
 
   api_green:
@@ -33,11 +34,17 @@ services:
       - .env
     depends_on:
       - redis
+      - mongo
     restart: unless-stopped
 
   mongo:
     image: mongo:7
     container_name: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+    secrets:
+      - mongo_root_password
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
@@ -49,6 +56,10 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+
+secrets:
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt
 
 volumes:
   mongo_data:
