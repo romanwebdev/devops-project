@@ -27,7 +27,7 @@
   register: mongo_secret_file
 
 - name: Generate Mongo root password if it doesn't exist
-  shell: openssl rand -base64 24 > "{{ app_dest }}/secrets/mongo_root_password.txt"
+  shell: openssl rand -hex 24 > "{{ app_dest }}/secrets/mongo_root_password.txt"
   when: not mongo_secret_file.stat.exists
 
 - name: Secure the secret file permissions
