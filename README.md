@@ -92,3 +92,15 @@ For application-specific metrics, I instrumented the Node.js app with `prom-clie
 **Git Branch**: `prometheus-and-grafana`
 
 [Link to the task](https://roadmap.sh/projects/monitoring)
+
+---
+
+### Step 9: Multi-service architecture — React frontend, Redis, custom base images, and Docker secrets
+
+I expanded the project into a full multi-service application, renaming the API's folder from `app/` to `api/` and adding a new `web/` folder for a React frontend, with Docker Hub images split accordingly (`devops-project-api`, `devops-project-web`). Built a shared custom base image (`roman102/node-base`, with `dumb-init` for proper signal handling and a non-root user) that both the API and web Dockerfiles build from, with its own GitHub Actions workflow that only rebuilds when the base image's own files change. The React app (Vite, custom-styled) is a real working Todo UI — add, complete, and delete todos — built with a multi-stage Dockerfile where a Node build stage compiles static assets and a final `nginx:alpine` stage serves them, keeping the shipped image free of `node_modules` or any Node runtime. Updated the reverse proxy to route the frontend at `/` while the API keeps its existing routes (`/todos`, `/health`, `/secret`, `/metrics`), so both share one origin with no CORS configuration needed.
+
+Added Redis as a cache-aside layer in front of `GET /todos` (30s TTL, invalidated on any write, and designed to fail open — a Redis outage degrades to no caching rather than breaking the app), with its own persistent volume alongside MongoDB's. Enabled MongoDB authentication for the first time using Docker Compose's file-based secrets feature, with the root password generated directly on the server by Ansible (hex-encoded specifically to avoid MongoDB connection string escaping issues with special characters). Finally, added healthchecks to every service in the stack and configured log rotation via a shared `x-logging` YAML anchor (10MB per file, 3 files retained) applied uniformly across all six core services. This introduced multi-stage Docker builds for size optimization, custom shared base images, cache-aside patterns with graceful degradation, Compose-native secrets management, container healthchecks, and log rotation — while also surfacing several real debugging lessons: Nginx and Compose don't automatically pick up config or DNS changes without an explicit restart, Docker secrets need host-side file permissions that match the consuming container's internal user, and generated passwords need to be transport-safe for the format they'll be embedded in.
+
+**Git Branch**: `multi-service-application`
+
+[Link to the task](https://roadmap.sh/projects/multiservice-docker)
