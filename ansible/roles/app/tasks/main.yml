@@ -35,7 +35,7 @@
     path: '{{ app_dest }}/secrets/mongo_root_password.txt'
     owner: ubuntu
     group: ubuntu
-    mode: '0600'
+    mode: '0644'
 
 - name: Read the generated Mongo root password
   slurp:
